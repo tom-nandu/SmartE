@@ -1,0 +1,327 @@
+# AOSP Smart Home Integration - Requirements & Changes
+
+## 1. Required AOSP Components
+
+### A. Application Layer
+```
+packages/apps/SmartHomeControl/
+├── Android.bp                    # Build configuration
+├── AndroidManifest.xml           # App manifest
+├── res/                          # Resources
+│   ├── layout/
+│   │   ├── activity_main.xml
+│   │   ├── device_item.xml
+│   │   └── widget_layout.xml
+│   ├── values/
+│   │   ├── strings.xml
+│   │   └── colors.xml
+│   └── drawable/
+│       └── icons...
+└── src/com/android/smarthome/
+    ├── MainActivity.java
+    ├── MqttService.java
+    ├── DeviceAdapter.java
+    ├── QuickSettingsTile.java
+    └── SmartHomeWidget.java
+```
+
+### B. System Services (Optional - for deep integration)
+```
+frameworks/base/services/core/java/com/android/server/
+└── smarthome/
+    ├── SmartHomeManagerService.java
+    └── SmartHomeManager.java
+```
+
+### C. Permissions & Configuration
+```
+frameworks/base/core/res/
+├── AndroidManifest.xml           # Add system permissions
+└── res/values/config.xml         # Add configuration flags
+```
+
+---
+
+## 2. Build System Changes
+
+### Android.bp (Application Build File)
+```javascript
+android_app {
+    name: "SmartHomeControl",
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+    platform_apis: true,
+    certificate: "platform",
+    privileged: true,
+    
+    static_libs: [
+        "androidx.appcompat_appcompat",
+        "androidx.recyclerview_recyclerview",
+        "org.eclipse.paho.android.service",
+        "org.eclipse.paho.client.mqttv3",
+    ],
+    
+    optimize: {
+        enabled: false,
+    },
+}
+```
+
+### device.mk (Add to device makefile)
+```makefile
+# Smart Home Control App
+PRODUCT_PACKAGES += \
+    SmartHomeControl
+
+# MQTT Libraries
+PRODUCT_PACKAGES += \
+    org.eclipse.paho.android.service \
+    org.eclipse.paho.client.mqttv3
+```
+
+---
+
+## 3. Permissions Required
+
+### AndroidManifest.xml
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.smarthome">
+
+    <!-- Network Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    
+    <!-- Background Service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- System Level (if using system service) -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <!-- Quick Settings Tile (API 24+) -->
+    <uses-permission android:name="android.permission.BIND_QUICK_SETTINGS_TILE" />
+
+    <application
+        android:label="Smart Home"
+        android:icon="@drawable/ic_launcher"
+        android:persistent="true">
+        
+        <!-- Main Activity -->
+        <activity android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <!-- MQTT Background Service -->
+        <service android:name=".MqttService"
+            android:enabled="true"
+            android:exported="false" />
+        
+        <!-- Boot Receiver -->
+        <receiver android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        
+        <!-- Widget -->
+        <receiver android:name=".SmartHomeWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+        
+        <!-- Quick Settings Tile -->
+        <service android:name=".QuickSettingsTile"
+            android:icon="@drawable/ic_light"
+            android:label="Smart Home"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        
+    </application>
+</manifest>
+```
+
+---
+
+## 4. Dependencies Required
+
+### External Libraries (prebuilt)
+```
+prebuilts/sdk/current/androidx/
+├── androidx.appcompat_appcompat.jar
+├── androidx.recyclerview_recyclerview.jar
+└── androidx.constraintlayout_constraintlayout.jar
+
+external/mqtt/
+├── org.eclipse.paho.android.service.jar
+└── org.eclipse.paho.client.mqttv3.jar
+```
+
+### Add to AOSP Source
+```bash
+# Clone MQTT libraries
+cd external/
+git clone https://github.com/eclipse/paho.mqtt.android.git mqtt-android
+cd mqtt-android
+# Create Android.bp for building
+```
+
+---
+
+## 5. SELinux Policies
+
+### sepolicy/smarthome.te
+```
+# Smart Home App Domain
+type smarthome_app, domain;
+app_domain(smarthome_app)
+
+# Network access
+allow smarthome_app self:tcp_socket create_stream_socket_perms;
+allow smarthome_app port:tcp_socket name_connect;
+allow smarthome_app node:tcp_socket node_bind;
+
+# Wake lock
+allow smarthome_app sysfs_wake_lock:file { open write };
+
+# Service manager
+allow smarthome_app system_server:binder call;
+```
+
+### file_contexts
+```
+/system/app/SmartHomeControl(/.*)?    u:object_r:system_app_data_file:s0
+/data/data/com.android.smarthome(/.*)?  u:object_r:app_data_file:s0
+```
+
+---
+
+## 6. System Properties (Optional)
+
+### system.prop
+```properties
+# Smart Home Configuration
+persist.smarthome.mqtt.broker=broker.hivemq.com
+persist.smarthome.mqtt.port=1883
+persist.smarthome.mqtt.topic.control=smarthome/control
+persist.smarthome.mqtt.topic.status=smarthome/status
+persist.smarthome.autostart=true
+```
+
+---
+
+## 7. Build Commands
+
+### Building the App
+```bash
+# Navigate to AOSP root
+cd $AOSP_ROOT
+
+# Build the app
+m SmartHomeControl
+
+# Install to device
+adb install -r out/target/product/[device]/system/app/SmartHomeControl/SmartHomeControl.apk
+
+# Or flash entire system
+m -j$(nproc)
+adb reboot bootloader
+fastboot flashall
+```
+
+### Building as System App
+```bash
+# Make it a privileged app
+mm -j8 SmartHomeControl
+adb root
+adb remount
+adb push out/target/product/[device]/system/priv-app/SmartHomeControl/SmartHomeControl.apk /system/priv-app/SmartHomeControl/
+adb reboot
+```
+
+---
+
+## 8. Integration Points
+
+### A. Quick Settings Tile
+- Add tile to pull-down menu
+- Toggle lights directly from notification shade
+- Show current status
+
+### B. Home Screen Widget
+- Display all device states
+- Quick control buttons
+- Real-time status updates
+
+### C. Voice Commands (Google Assistant Integration)
+- "Turn on kitchen light"
+- "Turn off all lights"
+- Integration with AOSP voice services
+
+### D. Automation (Optional)
+- Time-based scheduling
+- Location-based triggers
+- Sensor integration
+
+---
+
+## 9. Testing Requirements
+
+### Unit Tests
+```
+packages/apps/SmartHomeControl/tests/
+├── AndroidTest.xml
+└── src/com/android/smarthome/tests/
+    ├── MqttServiceTest.java
+    └── DeviceControlTest.java
+```
+
+### CTS Tests (Compatibility)
+```
+cts/tests/tests/smarthome/
+└── SmartHomeTest.java
+```
+
+---
+
+## 10. Documentation Files
+
+### README.md
+- Setup instructions
+- Configuration guide
+- Troubleshooting
+
+### API Documentation
+- MQTT topic structure
+- Command format
+- Status messages
+
+---
+
+## Summary of Changes
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| App Source | `packages/apps/SmartHomeControl/` | Main application |
+| Build Config | `Android.bp`, `device.mk` | Build system |
+| Permissions | `AndroidManifest.xml` | App permissions |
+| SELinux | `sepolicy/` | Security policies |
+| Libraries | `external/mqtt/` | MQTT client |
+| System Props | `system.prop` | Configuration |
