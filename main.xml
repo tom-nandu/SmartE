@@ -1,0 +1,273 @@
+<!-- ============================================ -->
+<!-- activity_main.xml - Main Activity Layout -->
+<!-- res/layout/activity_main.xml -->
+<!-- ============================================ -->
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0a0e27"
+    android:padding="16dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/card_background"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🏠 Smart Home Control"
+            android:textSize="24sp"
+            android:textColor="#00ffff"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+
+            <TextView
+                android:id="@+id/tv_connection_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔴 Disconnected"
+                android:textSize="14sp"
+                android:textColor="#ff4444" />
+
+            <Switch
+                android:id="@+id/sw_auto_connect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Auto"
+                android:textColor="#ffffff" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_summary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 devices ON"
+            android:textSize="16sp"
+            android:textColor="#22d18b"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp" />
+    </LinearLayout>
+
+    <!-- Device List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_devices"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Control Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="16dp"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btn_all_on"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="All ON"
+            android:backgroundTint="#22d18b"
+            android:textColor="#ffffff"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btn_all_off"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="All OFF"
+            android:backgroundTint="#ff4444"
+            android:textColor="#ffffff"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_refresh"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Refresh Status"
+        android:backgroundTint="#0095ff"
+        android:textColor="#ffffff"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>
+
+<!-- ============================================ -->
+<!-- device_item.xml - Device Item Layout -->
+<!-- res/layout/device_item.xml -->
+<!-- ============================================ -->
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="#1a1f3a"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <!-- Indicator -->
+        <View
+            android:id="@+id/indicator"
+            android:layout_width="8dp"
+            android:layout_height="match_parent"
+            android:background="#394651"
+            android:layout_marginEnd="12dp" />
+
+        <!-- Icon -->
+        <TextView
+            android:id="@+id/tv_icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="💡"
+            android:textSize="28sp"
+            android:gravity="center"
+            android:background="@drawable/icon_background" />
+
+        <!-- Device Info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Device Name"
+                android:textSize="16sp"
+                android:textColor="#ffffff"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tv_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Light"
+                    android:textSize="12sp"
+                    android:textColor="#94a3b8"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/tv_gpio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GPIO 10"
+                    android:textSize="12sp"
+                    android:textColor="#00ffff" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Toggle Switch -->
+        <Switch
+            android:id="@+id/sw_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
+
+<!-- ============================================ -->
+<!-- strings.xml -->
+<!-- res/values/strings.xml -->
+<!-- ============================================ -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Smart Home</string>
+    <string name="connection_status">Connection Status</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="all_on">All ON</string>
+    <string name="all_off">All OFF</string>
+    <string name="refresh">Refresh</string>
+    <string name="devices_on">%d devices ON</string>
+</resources>
+
+<!-- ============================================ -->
+<!-- colors.xml -->
+<!-- res/values/colors.xml -->
+<!-- ============================================ -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_dark">#0a0e27</color>
+    <color name="primary">#1a1f3a</color>
+    <color name="accent_cyan">#00ffff</color>
+    <color name="accent_green">#22d18b</color>
+    <color name="accent_red">#ff4444</color>
+    <color name="text_primary">#ffffff</color>
+    <color name="text_secondary">#94a3b8</color>
+</resources>
+
+<!-- ============================================ -->
+<!-- card_background.xml -->
+<!-- res/drawable/card_background.xml -->
+<!-- ============================================ -->
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#1a1f3a" />
+    <corners android:radius="12dp" />
+    <stroke
+        android:width="1dp"
+        android:color="#00ffff33" />
+</shape>
+
+<!-- ============================================ -->
+<!-- icon_background.xml -->
+<!-- res/drawable/icon_background.xml -->
+<!-- ============================================ -->
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#00ffff22" />
+    <stroke
+        android:width="2dp"
+        android:color="#00ffff" />
+</shape>
+
+<!-- ============================================ -->
+<!-- widget_info.xml -->
+<!-- res/xml/widget_info.xml -->
+<!-- ============================================ -->
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/widget_layout"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:updatePeriodMillis="1800000"
+    android:previewImage="@drawable/widget_preview"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />
